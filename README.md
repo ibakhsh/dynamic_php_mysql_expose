@@ -4,6 +4,8 @@ dynamically expose the database over http requests for the entire database
  * will fix the full sql injection thing in new versions.
  * will fix the call of procedures and functions in new version 
  
+ email me for any updates (title=dynamic_php_services_ibakhsh) @: igbmadinah@gmail.com
+ 
  
  to use: set your database information in (config/actionMap.php)
  then just create your database tables for example: 
