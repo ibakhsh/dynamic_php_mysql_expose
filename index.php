@@ -83,8 +83,9 @@ function process_request_get($req){
         if ($db->getError()){
             array_push($errorList,$requestAction[$req[0]].":".json_encode($db->getError()));
         } else {
-            array_push($response,array("data",$result));
-            array_push($response,array("rowCount",$db->getRowCount()));
+            $data = array("data"=>$result);
+            array_push($response,$data);
+            array_push($response,array("rowCount"=>$db->getRowCount()));
         }
     }
 }
@@ -104,15 +105,15 @@ function process_request_post($req){
         */
         $table = $requestAction[$req[0]];
         $json = $_POST;
-        array_push($response,array("POST",$json));
+        //array_push($response,array("POST",$json));
         //$result = $db->insertRow($table,$json);
         $result = $db->insertRowCheckInjections($table,$json);
         if ($db->getError()){
-            array_push($errorList,$requestAction[$req[0]].":".$db->getError());
+            array_push($errorList,$requestAction[$req[0]].":".json_encode($db->getError()));
         } else {
-            array_push($response,array("data",$result));
-            array_push($response,array("rowCount",$db->getRowCount()));
-            array_push($response,array("pk_code",$db->getPk_Code()));
+            array_push($response,array("data"=>$result));
+            array_push($response,array("rowCount"=>$db->getRowCount()));
+            array_push($response,array("pk_code"=>$db->getPk_Code()));
         }
     }
 }
@@ -123,6 +124,15 @@ if(count($errorList)){
 } else {
     array_push($response,array('error'=>false));
 }
-echo json_encode($response);
+
+$rObj["error"] = false;
+foreach($response as $responseObj){
+    foreach($responseObj as $rkey=>$rval){
+        $rObj[$rkey] = $rval;
+    }
+}
+echo json_encode($rObj);
+
+//echo json_encode($response);
 
 ?> 
