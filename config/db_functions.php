@@ -219,10 +219,41 @@ function getRowCount(){
         $values_str = "";
         $values_arr = array();
         $param_type = ""; //array();
+        
         if (count($array) ==0) {
             array_push($this->error , "Post does not contain any data!");
             return false;
         }
+
+        //check if any post data is not a valid column_name: 
+        $all_columns = $this->getRows("SHOW COLUMNS FROM $table ", true);
+        $table_columns = array();
+        foreach($all_columns as $col_row){
+            $col_name = $col_row["Field"];
+            array_push($table_columns,$col_name);
+        }
+        $posted_columns = array_keys($array);
+        foreach($posted_columns as $posted_column){
+            if(!in_array($posted_column,$table_columns)) {
+                array_push($this->error , "field: $posted_column is not in table: $table");
+                return false;
+            }
+        }
+        $required_columns = array();
+        foreach($all_columns as $col_row){
+            if($col_row["Extra"] != "auto_increment" && (is_null($col_row["Default"])) && $col_row["Null"] == "NO") {
+                $col_name = $col_row["Field"];
+                if(!in_array($col_name,$posted_columns)) array_push($required_columns,$col_name);
+            } 
+        }
+        if(count($required_columns)>0) {
+                $str_columns = "";
+                foreach($required_columns as $col) $str_columns.=$col.",";
+                $str_columns = substr($str_columns,0,strlen($str_columns)-1);
+                array_push($this->error , "Required to post: ".$str_columns." in table $table .");
+                return false;
+        }
+
         foreach($array as $key=>$value){
             $count+=1;
             $columns_str .= ",".$key;
@@ -243,13 +274,13 @@ function getRowCount(){
         
         //echo json_encode($a_params);
 
-        //bind with bind_param to avoid sql injections 
-        call_user_func_array(array($stmt, 'bind_param'), $this->refValues($a_params));
-
+       
             if (!$stmt) {
                 array_push($this->error , "insertRow: Error in preparing statement (".$sql.") \n".$this->conn->error);
                 return false;
             } else { 
+                 //bind with bind_param to avoid sql injections 
+                call_user_func_array(array($stmt, 'bind_param'), $this->refValues($a_params));
                 $result = $stmt->execute();
                 //$ins_stmt = $result->store_result();
                 $count = $this->getConn()->affected_rows;

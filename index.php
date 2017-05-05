@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 //main arrays for the app 
 $response = array();
 $errorList = array();
-
+$response["error"] = false;
 
 //Handle different type of requests and request wildcards 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -53,8 +53,7 @@ function process_request($req, $request_method){
             array_push($errorList,'request method and called api mismatch!'.$action["method"]);
             return false;
         } else {
-            $request_info = array('request_info'=>array('method'=>$request_method,'request'=>$req[0]));
-            array_push($response,$request_info);
+            $response["request_info"] = array('method'=>$request_method,'request'=>$req[0]);
             if(strpos($action_name,'.php')) {
                 include_once($action_name);
                 return true;
@@ -90,9 +89,8 @@ function process_request_get($req, $requestAction){
         if ($db->getError()){
             array_push($errorList,$requestAction[$req[0]].":".json_encode($db->getError()));
         } else {
-            $data = array("data"=>$result);
-            array_push($response,$data);
-            array_push($response,array("rowCount"=>$db->getRowCount()));
+            $response["data"] = $result;
+            $response["rowCount"] = $db->getRowCount();
         }
 }
 
@@ -114,39 +112,18 @@ function process_request_post($req, $requestAction){
         if ($db->getError()){
             array_push($errorList,$requestAction[$req[0]].":".json_encode($db->getError()));
         } else {
-            array_push($response,array("data"=>$result));
-            array_push($response,array("rowCount"=>$db->getRowCount()));
-            array_push($response,array("pk_code"=>$db->getPk_Code()));
+            $response["data"] = $result;
+            $response["rowCount"] = $db->getRowCount();
+            $response["pk_code"] = $db->getPk_Code();
         }
 }
 
-
-
-$respKeys = array_keys($response);
 
 if(count($errorList)){
-    if(!in_array("error",$respKeys)){
-        array_push($response,array('error'=>true));
-        array_push($response,array('error_messages'=>$errorList));
-    }
-} else {
-    if(!in_array("error",$respKeys)){
-        array_push($response,array('error'=>false));
-    }
+        $response["error"] = true;
+        $response["error_messages"] = $errorList;
 }
 
-$rObj["error"] = false;
-
-if(!in_array("error",$respKeys)){
-    foreach($response as $responseObj){
-        foreach($responseObj as $rkey=>$rval){
-            $rObj[$rkey] = $rval;
-        }
-    }
-    echo json_encode($rObj);
-} else {
-    echo json_encode($response);
-}
-
+echo json_encode($response);
 
 ?> 
