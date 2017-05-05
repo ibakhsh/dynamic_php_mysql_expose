@@ -14,10 +14,12 @@ include_once('config/actionMap.php');
 
 switch ($method) {
   case 'POST':
-    process_request_post($request);  
+    process_request($request, $method);
+    //process_request_post($request);  
     break;
   case 'GET':
-    process_request_get($request);  
+    process_request($request, $method);
+    //process_request_get($request);  
     break;
   default:
     array_push($errorList,'sorry, only Get & Post are allowed.');
@@ -46,26 +48,31 @@ function process_request($req, $request_method){
         array_push($errorList,'invalid action!');
         return false;
     } else {
-        $key = array_keys($action);
-        $len = strlen($request_method) * -1;
-        $actionMethod = strtoupper(substr($key[0],$len));
-        if($actionMethod != $request_method)  {
-            array_push($errorList,'request method and called api mismatch!'.$actionMethod);
+        $action_name = $action[$req[0]];
+        if($action["method"]!=$request_method)  {
+            array_push($errorList,'request method and called api mismatch!'.$action["method"]);
             return false;
         } else {
             $request_info = array('request_info'=>array('method'=>$request_method,'request'=>$req[0]));
             array_push($response,$request_info);
-            return $action;
+            if(strpos($action_name,'.php')) {
+                include_once($action_name);
+                return true;
+            } elseif ($request_method=="POST"){
+                process_request_post($req, $action);
+            } elseif($request_method=="GET") {
+                process_request_get($req, $action);
+            } else {
+                return $action;
+            }
         }
     }
 }
 
-function process_request_get($req){
+function process_request_get($req, $requestAction){
     global $method;
     global $errorList;
     global $response;
-    $requestAction = process_request($req, $method);
-    if($requestAction) {
         include_once('config/db_functions.php');
         $db = new DB_Functions();
         //TODO:change * with $_GET() a list of columns to populate
@@ -87,26 +94,22 @@ function process_request_get($req){
             array_push($response,$data);
             array_push($response,array("rowCount"=>$db->getRowCount()));
         }
-    }
 }
 
 
-function process_request_post($req){
+function process_request_post($req, $requestAction){
     global $method;
     global $errorList;
     global $response;
-    $requestAction= process_request($req, $method);
-    if($requestAction){
+
         include_once('config/db_functions.php');
         $db = new DB_Functions();
         /**TODO:
         * 1.Workout update solution (set pk_columns so it can be searched then decided)
-        * 2.set datetime columns so they can be customized
+        * 2.set datetime columns so they can be customized (think getting column type from db & autoconfig it)
         */
         $table = $requestAction[$req[0]];
         $json = $_POST;
-        //array_push($response,array("POST",$json));
-        //$result = $db->insertRow($table,$json);
         $result = $db->insertRowCheckInjections($table,$json);
         if ($db->getError()){
             array_push($errorList,$requestAction[$req[0]].":".json_encode($db->getError()));
@@ -115,24 +118,35 @@ function process_request_post($req){
             array_push($response,array("rowCount"=>$db->getRowCount()));
             array_push($response,array("pk_code"=>$db->getPk_Code()));
         }
-    }
 }
 
+
+
+$respKeys = array_keys($response);
+
 if(count($errorList)){
-    array_push($response,array('error'=>true));
-    array_push($response,array('error_messages'=>$errorList));
+    if(!in_array("error",$respKeys)){
+        array_push($response,array('error'=>true));
+        array_push($response,array('error_messages'=>$errorList));
+    }
 } else {
-    array_push($response,array('error'=>false));
+    if(!in_array("error",$respKeys)){
+        array_push($response,array('error'=>false));
+    }
 }
 
 $rObj["error"] = false;
-foreach($response as $responseObj){
-    foreach($responseObj as $rkey=>$rval){
-        $rObj[$rkey] = $rval;
-    }
-}
-echo json_encode($rObj);
 
-//echo json_encode($response);
+if(!in_array("error",$respKeys)){
+    foreach($response as $responseObj){
+        foreach($responseObj as $rkey=>$rval){
+            $rObj[$rkey] = $rval;
+        }
+    }
+    echo json_encode($rObj);
+} else {
+    echo json_encode($response);
+}
+
 
 ?> 

@@ -219,6 +219,10 @@ function getRowCount(){
         $values_str = "";
         $values_arr = array();
         $param_type = ""; //array();
+        if (count($array) ==0) {
+            array_push($this->error , "Post does not contain any data!");
+            return false;
+        }
         foreach($array as $key=>$value){
             $count+=1;
             $columns_str .= ",".$key;
@@ -274,25 +278,25 @@ function getRowCount(){
      * Storing new user
      * returns user details
      */
-    public function storeUser($f_name,$l_name, $email, $password , $phonenumber) {
+    public function storeUser($f_name,$l_name, $email, $password , $phone) {
        
         $hash = $this->hashSSHA($password);
-        $encrypted_password = $hash["encrypted"]; // encrypted password
+        $password = $hash["encrypted"]; // encrypted password
         $salt = $hash["salt"]; // salt
  
-        $stmt = $this->conn->prepare("INSERT INTO customer(f_name, l_name, email, encrypted_password, salt, phonenumber, registrationDate) VALUES(?, ?, ?, ?, ?, ?, NOW())");
+        $stmt = $this->conn->prepare("INSERT INTO user(firstname, lastname, email, password, salt, phone, registrationDate) VALUES(?, ?, ?, ?, ?, ?, NOW())");
         if (!$stmt) {
             echo "INSERT: Error in preparing statement \n";
             echo $this->conn->error;
             exit;
         }
-        $stmt->bind_param("ssssss", $f_name, $l_name, $email, $encrypted_password, $salt, $phonenumber);
+        $stmt->bind_param("ssssss", $f_name, $l_name, $email, $password, $salt, $phone);
         $result = $stmt->execute();
         $stmt->close();
  
         // check for successful store
         if ($result) {
-            $stmt = $this->conn->prepare("SELECT * FROM customer WHERE email = ?");
+            $stmt = $this->conn->prepare("SELECT * FROM user WHERE email = ?");
             if (!$stmt) {
                 echo "result: Error in preparing statement \n";
                 echo $this->conn->error;
@@ -315,7 +319,7 @@ function getRowCount(){
      */
     public function getUserByEmailAndPassword($email, $password) {
  
-        $stmt = $this->conn->prepare("SELECT * FROM customer WHERE email = ?");
+        $stmt = $this->conn->prepare("SELECT * FROM user WHERE email = ?");
             if (!$stmt) {
                 echo "getUserByEmail: Error in preparing statement \n";
                 echo $this->conn->error;
@@ -332,10 +336,10 @@ function getRowCount(){
             }
             // verifying user password
             $hash = $this->checkhashSSHA($row["salt"], $password);
-            $encrypted_password = $hash["encrypted"]; // encrypted password
+            $password = $hash["encrypted"]; // encrypted password
             // check for password equality
 
-            if ($row["encrypted_password"] == $hash) {
+            if ($row["password"] == $hash) {
                 // user authentication details are correct
                 return $row;
             } else {
@@ -351,7 +355,7 @@ function getRowCount(){
      */
     public function isUserExisted($email) {
         
-        $stmt = $this->conn->prepare("SELECT email from customer WHERE email = ?");
+        $stmt = $this->conn->prepare("SELECT email from user WHERE email = ?");
  
         $stmt->bind_param("s", $email);
  
