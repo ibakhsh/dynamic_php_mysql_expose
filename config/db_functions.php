@@ -65,6 +65,21 @@ function getRowCount(){
             }
     }
 
+    public function getRowsV3($sql, $filter = array(), $inner = false){
+        $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                array_push($this->error,"getRows: Error in preparing statement(".$sql.") \n".$this->conn->error);
+                //echo $this->error;
+                return false;
+            } else { 
+                $stmt->execute();
+                $rows = $this->db->fetch($stmt);
+                $stmt->close();
+                if (!$inner) $this->rowCount = count($rows);
+                return $rows;
+            }
+    }
+
     private $allowedOperators = array("=","!=","<>",">","<","<=",">=","IN","NOT IN", "BETWEEN","NOT BETWEEN");
     private $allowedLinks = array("AND", "AND(","OR","OR(","AND NOT","OR NOT", ")");
 
@@ -305,106 +320,6 @@ function getRowCount(){
             }
     }
 
-    /**
-     * Storing new user
-     * returns user details
-     */
-    public function storeUser($f_name,$l_name, $email, $password , $phone) {
-       
-        $hash = $this->hashSSHA($password);
-        $password = $hash["encrypted"]; // encrypted password
-        $salt = $hash["salt"]; // salt
- 
-        $stmt = $this->conn->prepare("INSERT INTO user(firstname, lastname, email, password, salt, phone, registrationDate) VALUES(?, ?, ?, ?, ?, ?, NOW())");
-        if (!$stmt) {
-            echo "INSERT: Error in preparing statement \n";
-            echo $this->conn->error;
-            exit;
-        }
-        $stmt->bind_param("ssssss", $f_name, $l_name, $email, $password, $salt, $phone);
-        $result = $stmt->execute();
-        $stmt->close();
- 
-        // check for successful store
-        if ($result) {
-            $stmt = $this->conn->prepare("SELECT * FROM user WHERE email = ?");
-            if (!$stmt) {
-                echo "result: Error in preparing statement \n";
-                echo $this->conn->error;
-                exit;
-            }
-            $stmt->bind_param("s", $email);
-            $stmt->execute();
-            //$user = $stmt->get_result()->fetch_assoc();
-            $user = $this->db->fetch($stmt);
-            $stmt->close();
- 
-            return $user;
-        } else {
-            return false;
-        }
-    }
- 
-    /**
-     * Get user by email and password
-     */
-    public function getUserByEmailAndPassword($email, $password) {
- 
-        $stmt = $this->conn->prepare("SELECT * FROM user WHERE email = ?");
-            if (!$stmt) {
-                echo "getUserByEmail: Error in preparing statement \n";
-                echo $this->conn->error;
-                exit;
-            }
-        $stmt->bind_param("s", $email);
- 
-        if ($stmt->execute()) {
-            $user = $this->db->fetch($stmt);
-            $stmt->close();
-            
-            foreach($user as $vRow){
-                $row = $vRow;
-            }
-            // verifying user password
-            $hash = $this->checkhashSSHA($row["salt"], $password);
-            $password = $hash["encrypted"]; // encrypted password
-            // check for password equality
-
-            if ($row["password"] == $hash) {
-                // user authentication details are correct
-                return $row;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
- 
-    /**
-     * Check user is existed or not
-     */
-    public function isUserExisted($email) {
-        
-        $stmt = $this->conn->prepare("SELECT email from user WHERE email = ?");
- 
-        $stmt->bind_param("s", $email);
- 
-        $stmt->execute();
- 
-        $stmt->store_result();
- 
-        if ($stmt->num_rows > 0) {
-            // user existed 
-            $stmt->close();
-            return true;
-        } else {
-            // user not existed
-            $stmt->close();
-            return false;
-        }
-    }
- 
     /**
      * Encrypting password
      * @param password

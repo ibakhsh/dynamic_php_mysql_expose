@@ -54,6 +54,26 @@ function process_request($req, $request_method){
             return false;
         } else {
             $response["request_info"] = array('method'=>$request_method,'request'=>$req[0]);
+            $posted_keys = array();
+            if($request_method=="POST"){
+                $posted_keys = array_keys($_POST);
+            } else {
+                $posted_keys = array_keys($_GET);
+            }
+            $required_keys = $action['required_keys'];
+            $keysNotFound = "";
+            if(is_array($required_keys)){
+                foreach($required_keys as $rKey){
+                    if (!in_array($rKey,$posted_keys)){
+                        $keysNotFound .= $rKey.",";
+                    }
+                }
+                if(strlen($keysNotFound)>0){
+                    $keysNotFound = substr($keysNotFound,0,strlen($keysNotFound)-1);
+                    array_push($errorList,"Required parameters: $keysNotFound are missing!");
+                    return false;
+                } 
+            }
             if(strpos($action_name,'.php')) {
                 include_once($action_name);
                 return true;
@@ -123,6 +143,8 @@ if(count($errorList)){
         $response["error"] = true;
         $response["error_messages"] = $errorList;
 }
+
+if(!$response["rowCount"] && is_array($response["data"]))   $response["rowCount"] = count($response["data"]);
 
 echo json_encode($response);
 
