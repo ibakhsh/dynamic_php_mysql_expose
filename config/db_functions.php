@@ -65,7 +65,79 @@ function getRowCount(){
             }
     }
 
-    public function getRowsV3($sql, $filter = array(), $inner = false){
+    public function getRowsV3($table, 
+                              $columns = array("check"=>true,"columns"=>array("*")), 
+                              $filter = array("check"=>true, "where"=>array()), 
+                              $inner = false
+                              )  {
+        if(!is_array($filter)) json_decode($filter);
+        if(!is_array($columns)) json_decode($columns);
+        //if no columns to select 
+        if(count($columns["columns"])<1) {
+            array_push($this->error,"no columns to select!");
+                return false;
+        }
+        
+        //if table name is wrong, TODO: consider views ?! 
+        $tables = $this->getRows("show tables",true);
+        $table_found = false;
+        foreach($tables as $tname){
+            if($tname == $table) {
+                $table_found = true;
+                break;
+            }
+        }
+        if(!$table_found) {
+            array_push($this->error,"table $table not found.");
+            return false;
+        }
+
+        //check if columns are in the table (fix the sql injection of one part of the operation)
+        if($columns["check"]){
+            $all_columns = $this->getRows("SHOW COLUMNS FROM $table ", true);
+            $db_columns = array();
+            foreach($all_columns as $sColumn){
+                array_push($db_columns,$sColumn["Field"]);
+            }
+            $db_wrong_columns = "";
+            foreach($columns["columns"] as $postedColumn){
+                if(!$postedColumn = "*"){
+                    if(!in_array($postedColumn,$db_columns)){
+                        $db_wrong_columns.= $postedColumn.',';
+                    }
+                }
+            }
+            if (strlen($db_wrong_columns)>0) {
+                array_push($this->error,"columns: $db_wrong_columns not found in table or view: $table");
+                return false;
+            }
+        }
+
+        //check if columns sent in filter exists in the same table: 
+        if($filter["check"]){
+            $all_columns = $this->getRows("SHOW COLUMNS FROM $table ", true);
+            $db_columns = array();
+            foreach($all_columns as $sColumn){
+                array_push($db_columns,$sColumn["Field"]);
+            }
+            $whereColumns = array();
+            foreach($filter["where"] as $whereRow){
+                array_push($whereColumns,$whereRow[0]);
+            }
+            $db_wrong_columns = "";
+            foreach($whereColumns as $postedColumn){
+                if(!$postedColumn = "*"){
+                    if(!in_array($postedColumn,$db_columns)){
+                        $db_wrong_columns.= $postedColumn.',';
+                    }
+                }
+            }
+            if (strlen($db_wrong_columns)>0) {
+                array_push($this->error,"filter columns: $db_wrong_columns not found in table or view: $table");
+                return false;
+            }
+        }
+        //TODO: bind the where to avoid injections 
         $stmt = $this->conn->prepare($sql);
             if (!$stmt) {
                 array_push($this->error,"getRows: Error in preparing statement(".$sql.") \n".$this->conn->error);
