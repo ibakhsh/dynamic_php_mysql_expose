@@ -82,7 +82,8 @@ function getRowCount(){
         $tables = $this->getRows("show tables",true);
         $table_found = false;
         foreach($tables as $tname){
-            if($tname == $table) {
+            $tables_keys = array_keys($tname);
+            if($tname[$tables_keys[0]] == $table) {
                 $table_found = true;
                 break;
             }
@@ -115,18 +116,21 @@ function getRowCount(){
 
         //check if columns sent in filter exists in the same table: 
         if($filter["check"]){
+            $whereArray = $filter["where"];
             $all_columns = $this->getRows("SHOW COLUMNS FROM $table ", true);
             $db_columns = array();
             foreach($all_columns as $sColumn){
                 array_push($db_columns,$sColumn["Field"]);
             }
             $whereColumns = array();
-            foreach($filter["where"] as $whereRow){
-                array_push($whereColumns,$whereRow[0]);
+            foreach($whereArray as $whereRow){
+                $whereRowKeys = array_keys($whereRow);
+                array_push($whereColumns,$whereRowKeys[0]);
             }
+            //echo json_encode($whereColumns);
             $db_wrong_columns = "";
             foreach($whereColumns as $postedColumn){
-                if(!$postedColumn = "*"){
+                if($postedColumn != "*"){
                     if(!in_array($postedColumn,$db_columns)){
                         $db_wrong_columns.= $postedColumn.',';
                     }
@@ -137,7 +141,23 @@ function getRowCount(){
                 return false;
             }
         }
-        //TODO: bind the where to avoid injections 
+        //TODO: bind the where to avoid injections
+        $columnsStr = "";
+        foreach($columns["columns"] as $postedColumn){
+            if(strlen($columnsStr)!=0){
+                $columnsStr.=", $postedColumn";
+            } else {
+                $columnsStr = $postedColumn;
+            }
+        } 
+        $sql = "select $columnsStr from $table";
+        $filterObj = array();
+        foreach($filter["where"] as $wRow){
+            $wKeys = array_keys($wRow);
+            array_push($filterObj, array($wKeys[0],$wRow[$wKeys[0]]));
+        }
+        return $this->getRowsv2($sql,$filterObj);
+        /*
         $stmt = $this->conn->prepare($sql);
             if (!$stmt) {
                 array_push($this->error,"getRows: Error in preparing statement(".$sql.") \n".$this->conn->error);
@@ -150,19 +170,21 @@ function getRowCount(){
                 if (!$inner) $this->rowCount = count($rows);
                 return $rows;
             }
+         */
     }
 
-    private $allowedOperators = array("=","!=","<>",">","<","<=",">=","IN","NOT IN", "BETWEEN","NOT BETWEEN");
+    private $allowedOperators = array("=","!=","<>",">","<","<=",">=","IN","NOT IN", "BETWEEN","NOT BETWEEN","LIKE","NOT LIKE");
     private $allowedLinks = array("AND", "AND(","OR","OR(","AND NOT","OR NOT", ")");
 
 
         public function getRowsv2($sql,$filter = null, $inner = false){
             
             if($filter != null) if(!is_array($filter)) $filter = json_decode($filter);
-
+            $filterRowValues = array();
             if($filter != null) if(is_array($filter)) {
                 foreach($filter as $filterRow){
                     $filterRowWhere = $filterRow[0];
+
                     if(count($filterRow)>2) {
                         
                         if(!in_array(strtoupper($filterRow[1]),$this->allowedOperators)) {
@@ -178,9 +200,11 @@ function getRowCount(){
                                         $where2 = "";
                                         foreach($filterRow[2] as $arrayVal) {
                                             if(strlen($where2)==0) {
-                                                $where2.="'".$arrayVal."'";
+                                                $where2.="?";
+                                                array_push($filterRowValues,$arrayVal);
                                             } else {
-                                                $where2.=",'".$arrayVal."'";
+                                                $where2.=",?";
+                                                array_push($filterRowValues,$arrayVal);
                                             }
                                         }
                                     }
@@ -194,11 +218,14 @@ function getRowCount(){
                                     }  else {
                                         $nextOperator = " and ";
                                         if(count($filterRow)>4) if(in_array(strtoupper($filterRow[4]),$this->allowedLinks))  $nextOperator = " ".$filterRow[4]." ";
-                                        $filterRowWhere.= " $filterRowOperator '".$filterRow[2]."' AND '".$filterRow[3]."'$nextOperator";
+                                        $filterRowWhere.= " $filterRowOperator ? AND ? $nextOperator";
+                                        array_push($filterRowValues,$filterRow[2]);
+                                        array_push($filterRowValues,$filterRow[3]);
                                     }
                                     break;
                                 default:
-                                    $filterRowWhere.= "$filterRowOperator'".$filterRow[2]."'";
+                                    $filterRowWhere.= "$filterRowOperator ? ";
+                                    array_push($filterRowValues,$filterRow[2]);
                                     break;
                             }
                         }
@@ -228,8 +255,10 @@ function getRowCount(){
                         }
                     }
                     if(count($filterRow)==1) if($filterRow[0] == ")" )  $filterRowWhere = ")";
-                    if(count($filterRow)==2) $filterRowWhere = $filterRow[0]."='".$filterRow[1]."' and ";
-
+                    if(count($filterRow)==2) {
+                        $filterRowWhere = $filterRow[0]."= ? and ";
+                        array_push($filterRowValues,$filterRow[1]);
+                    }
                     if(!strpos(strtoupper($sql),"WHERE")) {
                         $sql.=" where ".$filterRowWhere;
                     } else {
@@ -240,12 +269,25 @@ function getRowCount(){
             $len = strlen($sql);
             if($len>5) if(substr($sql,-5) == " and ") $sql = substr($sql,0,$len-4);
             $stmt = $this->conn->prepare($sql);
-
+           
             if (!$stmt) {
                 array_push($this->error,"getRowsv2: Error in preparing statement4(".$sql.") \n".$this->conn->error);
                 //echo $this->error;
                 return false;
             } else { 
+                 if(count($filterRowValues)>0){
+                    $a_params = array();
+                    $param_type = "";
+                    foreach($filterRowValues as $sValue){
+                        $param_type.="s";
+                    }
+                    array_push($a_params,$param_type);
+                    foreach($filterRowValues as $singleValue){
+                        array_push($a_params,$singleValue);
+                    }
+                    
+                    call_user_func_array(array($stmt, 'bind_param'), $this->refValues($a_params));
+                }
                 $stmt->execute();
                 $rows = $this->db->fetch($stmt);
                 $stmt->close();
