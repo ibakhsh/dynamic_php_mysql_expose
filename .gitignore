@@ -27,8 +27,8 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-testGet.php
-login.php
-register.php
+# testGet.php
+# login.php
+# register.php
 # End of https://www.gitignore.io/api/macos
 
