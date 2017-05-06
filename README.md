@@ -9,8 +9,8 @@ dynamically expose the database over http requests for the entire database
  
  to use: set your database information in (config/actionMap.php)
  then just create your database tables for example: 
- <code>
- CREATE TABLE IF NOT EXISTS `test` (
+```
+CREATE TABLE IF NOT EXISTS `test` (
   `id` int(11) NOT NULL,
   `col1` varchar(200) DEFAULT NULL,
   `col2` int(11) DEFAULT NULL,
@@ -22,16 +22,22 @@ ALTER TABLE `test`
   
 ALTER TABLE `test`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=14;
-</code>
+```
 
 now to test the project: 
 
 //Posting Data:
+
 http://localhost/{your_project_name}/index.php/testPost
 posted Data: col1=value1&col2=123
+```
 {"error":false,"request_info":{"method":"POST","request":"testPost"},"data":[{"id":17,"col1":"value1","col2":123,"record_date":"2017-05-04 18:47:45"}],"rowCount":1,"pk_code":1} 
-
+```
 //Getting Data: 
 http://localhost/{your_project_name}/index.php/testPost?id=1
+```
 {"error":false,"request_info":{"method":"GET","request":"testGet"},"data":[{"id":1,"col1":"value1","col2":123,"record_date":"2017-05-04 18:47:45"}],"rowCount":1} 
+```
+
+hope it works 
 
