@@ -9,6 +9,7 @@ dynamically expose the database over http requests for the entire database
  
  to use: set your database information in (config/actionMap.php)
  then just create your database tables for example: 
+ 1-create your database: 
 ```SQL
 CREATE TABLE IF NOT EXISTS `test` (
   `id` int(11) NOT NULL,
@@ -23,13 +24,21 @@ ALTER TABLE `test`
 ALTER TABLE `test`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=14;
 ```
+2-add service links on your config/actionMap.php
+```php
+$actionMap = array(
+               array('testPost'=>'test', 'method'=>'POST'),
+               array('testGet'=>'test', 'method'=>'GET')
+            );
+```
 
-now to test the project: 
+You are all done. 
 
-//Posting Data:
+now just try the app: 
 
+A.Posting Data:
 http://localhost/{your_project_name}/index.php/testPost
-posted Data: col1=value1&col2=123
+#posted Data: col1=value1&col2=123
 ```JSON
 {
    "error":false,
@@ -50,7 +59,7 @@ posted Data: col1=value1&col2=123
 }
 ```
 
-//Getting Data: 
+B.Getting Data: 
 http://localhost/{your_project_name}/index.php/testPost?id=1
 ```JSON
 {
@@ -71,5 +80,6 @@ http://localhost/{your_project_name}/index.php/testPost?id=1
 }
 ```
 
-hope it works 
+will continue improving the code .. if you have any issues or suggestions email me. 
+Best of luck. 
 
