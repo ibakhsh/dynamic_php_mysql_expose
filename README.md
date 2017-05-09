@@ -78,8 +78,7 @@ http://localhost/{your_project_name}/index.php/testPost?id=1
 }
 ```
 
-will continue improving the code .. if you have any issues or suggestions email me. 
-my email (title=dynamic_php_services_ibakhsh) @: igbmadinah@gmail.com
+will continue improving the code .. let me know of any issues to fix. 
 Best of luck. 
 
 
