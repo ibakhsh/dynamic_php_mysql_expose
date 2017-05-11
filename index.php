@@ -21,6 +21,21 @@ switch ($method) {
     process_request($request, $method);
     //process_request_get($request);  
     break;
+  case 'PUT':
+    if(count($request)<1) {
+        array_push($errorList,'put requires params for the primary key as json object.');
+        break;
+    } else {
+        $pk_json = $request[1];
+        $pk_json = json_decode($pk_json);
+        if(gettype($pk_json)!=object) {
+            array_push($errorList,'sorry parameters for primary key must be a json object like: ...~index.php/'.$request[0].'/{"ID":"5"}');
+            break;
+        } else {
+            process_request($request, $method, $pk_json);
+            break;
+        }
+    }
   default:
     array_push($errorList,'sorry, only Get & Post are allowed.');
     break;
@@ -28,7 +43,7 @@ switch ($method) {
 
 $action = array();
 
-function process_request($req, $request_method){
+function process_request($req, $request_method, $pk_json=null){
     global $response;
     global $errorList;
     global $action;
@@ -81,6 +96,8 @@ function process_request($req, $request_method){
                 process_request_post($req, $action);
             } elseif($request_method=="GET") {
                 process_request_get($req, $action);
+            } elseif($request_method=="PUT") {
+                process_request_put($req, $action, $pk_json);
             } else {
                 return $action;
             }
@@ -138,6 +155,28 @@ function process_request_post($req, $requestAction){
         }
 }
 
+
+function process_request_put($req, $requestAction, $pk_json){
+    global $method;
+    global $errorList;
+    global $response;
+
+        include_once('config/db_functions.php');
+        $db = new DB_Functions();
+        $table = $requestAction[$req[0]];
+        parse_str(file_get_contents("php://input"),$json);
+        if(count($json)==0) $json = $_POST;
+        if(count($json)==0) $json = $_GET;
+        $result = $db->updateRowCheckInjections($table,$json, $pk_json);
+        if ($db->getError()){
+            array_push($errorList,$requestAction[$req[0]].":".json_encode($db->getError()));
+        } else {
+            $response["data"] = $result;
+            $response["rowCount"] = $db->getRowCount();
+            $response["pk_code"] = $db->getPk_Code();
+        }
+        $response["sql_statement"] = $db->getSqlStatement();
+}
 
 if(count($errorList)){
         $response["error"] = true;
