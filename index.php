@@ -173,7 +173,7 @@ function process_request_put($req, $requestAction, $pk_json){
         } else {
             $response["data"] = $result;
             $response["rowCount"] = $db->getRowCount();
-            $response["pk_code"] = $db->getPk_Code();
+            //$response["pk_code"] = $db->getPk_Code();
         }
         $response["sql_statement"] = $db->getSqlStatement();
 }
@@ -184,7 +184,7 @@ if(count($errorList)){
 }
 
 if(!$response["rowCount"] && is_array($response["data"]))   $response["rowCount"] = count($response["data"]);
-
+if(!($_GET["debug"])) if(strlen($response["sql_statement"])>0) unset($response["sql_statement"]);
 echo json_encode($response);
 
 ?> 
