@@ -181,6 +181,7 @@ function process_request_put($req, $requestAction, $pk_json){
 if(count($errorList)){
         $response["error"] = true;
         $response["error_messages"] = $errorList;
+        http_response_code(400);
 }
 
 if(!$response["rowCount"] && is_array($response["data"]))   $response["rowCount"] = count($response["data"]);
