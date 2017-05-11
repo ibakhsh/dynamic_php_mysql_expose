@@ -34,10 +34,10 @@ You are all done.
 
 now just try the app: 
 
-A.Posting Data:
-Method: POST
-URL: http://localhost/{your_project_name}/index.php/testPost
-#posted Data: col1=value1&col2=123
+A.Posting Data: <br>
+Method: POST <br>
+URL: http://localhost/{your_project_name}/index.php/testPost <br>
+#posted Data: col1=value1&col2=123 <br>
 ```JSON
 {
    "error":false,
@@ -58,9 +58,9 @@ URL: http://localhost/{your_project_name}/index.php/testPost
 }
 ```
 
-B.Getting Data: 
-Method: GET
-URL: http://localhost/{your_project_name}/index.php/testPost?id=1
+B.Getting Data: <br>
+Method: GET <br>
+URL: http://localhost/{your_project_name}/index.php/testPost?id=1 <br>
 ```JSON
 {
    "error":false,
@@ -80,10 +80,10 @@ URL: http://localhost/{your_project_name}/index.php/testPost?id=1
 }
 ```
 
-C.Updating Data: 
-Method: PUT
-URL: http://localhost/easy.parking/index.php/testPut/{"id":"5"}
-#Posted Data: col2=2011&col1=igb5
+C.Updating Data: <br>
+Method: PUT <br>
+URL: http://localhost/easy.parking/index.php/testPut/{"id":"5"} <br>
+#Posted Data: col2=2011&col1=igb5 <br>
 ```JSON
     {
         "error": false,
@@ -104,6 +104,9 @@ URL: http://localhost/easy.parking/index.php/testPut/{"id":"5"}
         "rowCount": 1
     }
 ```
+
+
+
 will continue improving the code .. let me know of any issues to fix. 
 Best of luck. 
 
