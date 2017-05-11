@@ -35,7 +35,8 @@ You are all done.
 now just try the app: 
 
 A.Posting Data:
-http://localhost/{your_project_name}/index.php/testPost
+Method: POST
+URL: http://localhost/{your_project_name}/index.php/testPost
 #posted Data: col1=value1&col2=123
 ```JSON
 {
@@ -58,7 +59,8 @@ http://localhost/{your_project_name}/index.php/testPost
 ```
 
 B.Getting Data: 
-http://localhost/{your_project_name}/index.php/testPost?id=1
+Method: GET
+URL: http://localhost/{your_project_name}/index.php/testPost?id=1
 ```JSON
 {
    "error":false,
@@ -78,6 +80,30 @@ http://localhost/{your_project_name}/index.php/testPost?id=1
 }
 ```
 
+C.Updating Data: 
+Method: PUT
+URL: http://localhost/easy.parking/index.php/testPut/{"id":"5"}
+#Posted Data: col2=2011&col1=igb5
+```JSON
+    {
+        "error": false,
+        "request_info":
+        {
+            "method": "PUT",
+            "request": "testPut"
+        },
+        "data":
+        [
+            {
+                "id": 5,
+                "col1": "igb5",
+                "col2": 2011,
+                "record_date": "2017-05-09 16:19:20"
+            }
+        ],
+        "rowCount": 1
+    }
+```
 will continue improving the code .. let me know of any issues to fix. 
 Best of luck. 
 
