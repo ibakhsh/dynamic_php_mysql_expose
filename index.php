@@ -114,7 +114,7 @@ function process_request_get($req, $requestAction){
         //TODO:change * with $_GET() a list of columns to populate
         $sql = "select * from ".$requestAction[$req[0]];
         $filter = array();
-        if($_GET["filter"]) $filter = $_GET["filter"];
+        if(key_exists("filter",$_GET)) $filter = json_decode($_GET["filter"]);
         if(!$filter) {
             $array = $_GET;
             $filter = array();
@@ -122,6 +122,21 @@ function process_request_get($req, $requestAction){
                 array_push($filter,array($key,$value));
             }
         }
+        //echo json_encode($filter);
+        //exit;
+        
+        $filterColumns = array();
+        foreach($filter as $filterRow){
+            array_push($filterColumns,$filterRow[0]);
+        }
+
+        $check_columns = $db->checkTableColumns($requestAction[$req[0]],$filterColumns);
+        
+        if(is_array($check_columns)) {
+            array_push($errorList,$requestAction[$req[0]].":".json_encode($check_columns));
+            return false;
+        }
+
         $result = $db->getRowsv2($sql,$filter);
         if ($db->getError()){
             array_push($errorList,$requestAction[$req[0]].":".json_encode($db->getError()));

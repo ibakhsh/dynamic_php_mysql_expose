@@ -4,11 +4,11 @@
     require_once("config/db_functions.php");
     $db = new DB_Functions();
     /** emulating a call like this: 
-    * Get: Http://localhost/{your_project_name}/index.php/customeActionName
+    * Get: Http://localhost/{your_project_name}/index.php/{your_custome_ActionName}
     * Example1: Query String: lastname=bakhsh&email=a@b.c
-    * Example2: Query String: [["lastname","=","bakhsh3"],["email","=","a@b.c"]]
-    * Example3: Query String: [["lastname","=","bakhsh3"],["age",">","30"]] 
-    * Example4: Query String: [["lastname","=","bakhsh3"],["age","between","22","60"]] 
+    * Example2: Query String: filter=[["lastname","=","bakhsh3"],["email","=","a@b.c"]]
+    * Example3: Query String: filter=[["lastname","=","bakhsh3"],["age",">","30"]] 
+    * Example4: Query String: filter=[["lastname","=","bakhsh3"],["age","between","22","60"]] 
     *
     */ 
     $result = $db->getRowsV3("user",

@@ -80,6 +80,33 @@ class DB_Functions
         }
     }
 
+    function checkTableColumns($table, $columns){
+        //if($errorArray==null) $errorArray= $this->error;
+        $all_columns = $this->getRows("SHOW COLUMNS FROM $table ", true);
+        
+            $db_columns = array();
+            foreach ($all_columns as $sColumn) {
+                array_push($db_columns, $sColumn["Field"]);
+            }
+            
+            $db_wrong_columns = "";
+            foreach ($columns as $postedColumn) {
+                if ($postedColumn != "*") {
+                    if (!in_array($postedColumn, $db_columns)) {
+                        $db_wrong_columns.= $postedColumn.',';
+                    }
+                }
+            }
+            
+            if (strlen($db_wrong_columns)>0) {
+                array_push($this->error, "columns: $db_wrong_columns not found in table or view: $table");
+                return $this->error;
+                return false;
+            } else {
+                return true;
+            }
+    }
+
     public function getRowsV3(
         $table,
         $columns = array("check"=>true,"columns"=>array("*")),
@@ -115,23 +142,8 @@ class DB_Functions
 
         //check if columns are in the table (fix the sql injection of one part of the operation)
         if ($columns["check"]) {
-            $all_columns = $this->getRows("SHOW COLUMNS FROM $table ", true);
-            $db_columns = array();
-            foreach ($all_columns as $sColumn) {
-                array_push($db_columns, $sColumn["Field"]);
-            }
-            $db_wrong_columns = "";
-            foreach ($columns["columns"] as $postedColumn) {
-                if (!$postedColumn = "*") {
-                    if (!in_array($postedColumn, $db_columns)) {
-                        $db_wrong_columns.= $postedColumn.',';
-                    }
-                }
-            }
-            if (strlen($db_wrong_columns)>0) {
-                array_push($this->error, "columns: $db_wrong_columns not found in table or view: $table");
-                return false;
-            }
+            $check_columns = $this->checkTableColumns($table,$columns["columns"]);
+            if(!$check_columns) return false;
         }
 
         //check if columns sent in filter exists in the same table:
@@ -251,7 +263,7 @@ class DB_Functions
                                     }
                                     break;
                                 default:
-                                    $filterRowWhere.= "$filterRowOperator ? ";
+                                    $filterRowWhere.= "$filterRowOperator ? and ";
                                     array_push($filterRowValues, $filterRow[2]);
                                     break;
                             }
@@ -299,7 +311,7 @@ class DB_Functions
             if(count($filterWhere)>0){
                 $n =0;
                 foreach($filterWhere as $whereRow){
-                    if($n == (count($filterWhere)-1)){
+                    if($n == count($filterWhere)-1){
                         $filterWhereText .= substr($whereRow, 0, strlen($whereRow)-4);
                     } else {
                         $filterWhereText .= $whereRow;
@@ -308,6 +320,8 @@ class DB_Functions
                 }
             }
             $outObj = array("filterWhere"=>$filterWhereText, "filterRowValues"=>$filterRowValues);
+            //echo json_encode($outObj);
+            //exit;
             return $outObj;
     } // end of function processFilter
 
@@ -315,6 +329,7 @@ class DB_Functions
     {
         $filterObj = $this->processFilter($filter);
         
+
         if (strlen($filterObj["filterWhere"])>0) {
             if (!strpos(strtoupper($sql), "WHERE")) {
                 $sql.=" where ";
