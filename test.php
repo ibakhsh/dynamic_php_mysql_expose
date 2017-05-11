@@ -8,6 +8,7 @@
     * Example1: Query String: lastname=bakhsh&email=a@b.c
     * Example2: Query String: [["lastname","=","bakhsh3"],["email","=","a@b.c"]]
     * Example3: Query String: [["lastname","=","bakhsh3"],["age",">","30"]] 
+    * Example4: Query String: [["lastname","=","bakhsh3"],["age","between","22","60"]] 
     */ 
     $result = $db->getRowsV3("user",
                              array("check"=>true, "columns"=>array("*")),
