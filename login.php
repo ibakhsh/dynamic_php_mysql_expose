@@ -26,6 +26,7 @@ if($db->getRowCount()<1){
         unset($user["registrationDate"]);
         $_SESSION['user'] = $user;
         $response["data"] = array($user);
+        //i have added a line 
     }
 }
 ?>
