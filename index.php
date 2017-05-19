@@ -65,7 +65,7 @@ function process_request($req, $request_method, $pk_json=null){
     } else {
         $action_name = $action[$req[0]];
         if($action["method"]!=$request_method)  {
-            array_push($errorList,'request method and called api mismatch!'.$action["method"]);
+            array_push($errorList,'request method and called api mismatch! {actionMethod:'.$action["method"].",request_method:".$request_method."}");
             return false;
         } else {
             $response["request_info"] = array('method'=>$request_method,'request'=>$req[0]);
@@ -196,7 +196,7 @@ function process_request_put($req, $requestAction, $pk_json){
 if(count($errorList)){
         $response["error"] = true;
         $response["error_messages"] = $errorList;
-        http_response_code(400);
+        //http_response_code(400);
 }
 
 if(!$response["rowCount"] && is_array($response["data"]))   $response["rowCount"] = count($response["data"]);

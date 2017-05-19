@@ -17,11 +17,14 @@ if($db->getRowCount()<1){
         array_push($errorList,"username or password is wrong.");
         return false;
     } else {
+        // Start the session
+        session_start();
         $user = $user[0];
         unset($user["username"]);
         unset($user["password"]);
         unset($user["salt"]);
         unset($user["registrationDate"]);
+        $_SESSION['user'] = $user;
         $response["data"] = array($user);
     }
 }
