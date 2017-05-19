@@ -17,6 +17,11 @@ if($db->getRowCount()<1){
         array_push($errorList,"username or password is wrong.");
         return false;
     } else {
+
+        /*
+        some other code 
+        */
+
         // Start the session
         session_start();
         $user = $user[0];
